@@ -11,16 +11,27 @@ import { LockKeyhole, User } from "lucide-react";
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(username, password)) {
+    if (!username || !password) {
+      toast.error("Por favor, preencha todos os campos.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await login(username, password);
       toast.success("Login bem-sucedido!");
       navigate("/dashboard");
-    } else {
+    } catch (error) {
+      console.error("Login error:", error);
       toast.error("Falha no login. Verifique suas credenciais.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -46,6 +57,7 @@ const Login = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -60,20 +72,25 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
           </CardContent>
 
           <CardFooter>
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-              Entrar
+            <Button 
+              type="submit" 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              disabled={isLoading}
+            >
+              {isLoading ? "Entrando..." : "Entrar"}
             </Button>
           </CardFooter>
         </form>
         
         <div className="px-6 pb-6 text-center text-sm text-gray-500">
-          <p>Para o MVP, qualquer usuário e senha funcionam</p>
+          <p>Para o MVP, use seu email e senha para autenticar</p>
         </div>
       </Card>
     </div>

@@ -19,7 +19,7 @@ const getClients = async (): Promise<Client[]> => {
       throw error;
     }
     
-    return data || [];
+    return data ? data.map(mapSupabaseToClient) : [];
   } catch (error) {
     console.error('Erro ao buscar clientes:', error);
     return [];
@@ -40,7 +40,7 @@ const getClientById = async (id: string): Promise<Client | undefined> => {
       return undefined;
     }
     
-    return data;
+    return data ? mapSupabaseToClient(data) : undefined;
   } catch (error) {
     console.error('Erro ao buscar cliente por ID:', error);
     return undefined;
@@ -52,25 +52,7 @@ const addClient = async (client: Omit<Client, 'id'>): Promise<Client | null> => 
   try {
     const { data, error } = await supabase
       .from('clients')
-      .insert([
-        {
-          nome_fantasia: client.nomeFantasia,
-          cnpj: client.cnpj,
-          cpf: client.cpf,
-          telefone: client.telefone,
-          email: client.email,
-          cep: client.cep,
-          logradouro: client.logradouro,
-          numero: client.numero,
-          complemento: client.complemento,
-          bairro: client.bairro,
-          cidade: client.cidade,
-          uf: client.uf,
-          plano: client.plano,
-          valor: client.valor,
-          vencimento: client.vencimento
-        }
-      ])
+      .insert([mapClientToSupabase(client)])
       .select()
       .single();
     
@@ -79,8 +61,7 @@ const addClient = async (client: Omit<Client, 'id'>): Promise<Client | null> => 
       throw error;
     }
     
-    // Converta o formato do Supabase para o formato do Client
-    return mapSupabaseToClient(data);
+    return data ? mapSupabaseToClient(data) : null;
   } catch (error) {
     console.error('Erro ao adicionar cliente:', error);
     return null;
@@ -92,23 +73,7 @@ const updateClient = async (id: string, updatedClient: Omit<Client, 'id'>): Prom
   try {
     const { data, error } = await supabase
       .from('clients')
-      .update({
-        nome_fantasia: updatedClient.nomeFantasia,
-        cnpj: updatedClient.cnpj,
-        cpf: updatedClient.cpf,
-        telefone: updatedClient.telefone,
-        email: updatedClient.email,
-        cep: updatedClient.cep,
-        logradouro: updatedClient.logradouro,
-        numero: updatedClient.numero,
-        complemento: updatedClient.complemento,
-        bairro: updatedClient.bairro,
-        cidade: updatedClient.cidade,
-        uf: updatedClient.uf,
-        plano: updatedClient.plano,
-        valor: updatedClient.valor,
-        vencimento: updatedClient.vencimento
-      })
+      .update(mapClientToSupabase(updatedClient))
       .eq('id', id)
       .select()
       .single();
@@ -118,8 +83,7 @@ const updateClient = async (id: string, updatedClient: Omit<Client, 'id'>): Prom
       throw error;
     }
     
-    // Converta o formato do Supabase para o formato do Client
-    return mapSupabaseToClient(data);
+    return data ? mapSupabaseToClient(data) : null;
   } catch (error) {
     console.error('Erro ao atualizar cliente:', error);
     return null;
@@ -150,21 +114,43 @@ const deleteClient = async (id: string): Promise<boolean> => {
 function mapSupabaseToClient(data: any): Client {
   return {
     id: data.id,
-    nomeFantasia: data.nome_fantasia,
+    nomeFantasia: data.fantasy_name,
     cnpj: data.cnpj,
     cpf: data.cpf,
-    telefone: data.telefone,
+    telefone: data.phone,
     email: data.email,
     cep: data.cep,
-    logradouro: data.logradouro,
-    numero: data.numero,
-    complemento: data.complemento,
-    bairro: data.bairro,
-    cidade: data.cidade,
-    uf: data.uf,
-    plano: data.plano,
-    valor: data.valor,
-    vencimento: data.vencimento
+    logradouro: data.street,
+    numero: data.number,
+    complemento: data.complement,
+    bairro: data.neighborhood,
+    cidade: data.city,
+    uf: data.state,
+    plano: data.plan,
+    valor: data.value,
+    vencimento: data.due_date.toString()
+  };
+}
+
+// Função auxiliar para converter formato Client para o formato do Supabase
+function mapClientToSupabase(client: Omit<Client, 'id'>): any {
+  return {
+    fantasy_name: client.nomeFantasia,
+    cnpj: client.cnpj,
+    cpf: client.cpf,
+    phone: client.telefone,
+    email: client.email,
+    cep: client.cep,
+    street: client.logradouro,
+    number: client.numero,
+    complement: client.complemento,
+    neighborhood: client.bairro,
+    city: client.cidade,
+    state: client.uf,
+    plan: client.plano,
+    value: client.valor,
+    due_date: parseInt(client.vencimento, 10),
+    user_id: supabase.auth.getUser().then(({ data }) => data.user?.id)
   };
 }
 

@@ -1,104 +1,172 @@
 
+import { supabase } from "../integrations/supabase/client";
 import { Client } from "../types/client";
 
-// Default clients for MVP
-const defaultClients: Client[] = [
-  {
-    id: "1",
-    nomeFantasia: "Empresa ABC Ltda",
-    cnpj: "12.345.678/0001-90",
-    cpf: null,
-    telefone: "(11) 98765-4321",
-    email: "contato@empresaabc.com.br",
-    cep: "01310-200",
-    logradouro: "Av. Paulista",
-    numero: "1000",
-    complemento: "Sala 123",
-    bairro: "Bela Vista",
-    cidade: "São Paulo",
-    uf: "SP",
-    plano: "Premium",
-    valor: 299.90,
-    vencimento: "10"
-  },
-  {
-    id: "2",
-    nomeFantasia: "João da Silva",
-    cnpj: null,
-    cpf: "123.456.789-00",
-    telefone: "(11) 91234-5678",
-    email: "joao.silva@email.com",
-    cep: "04538-132",
-    logradouro: "R. Joaquim Floriano",
-    numero: "1000",
-    complemento: "Apto 45",
-    bairro: "Itaim Bibi",
-    cidade: "São Paulo",
-    uf: "SP",
-    plano: "Básico",
-    valor: 99.90,
-    vencimento: "15"
-  }
-];
-
-// Initialize clients in localStorage if not exist
-const initClients = () => {
-  const clients = localStorage.getItem('clients');
-  if (!clients) {
-    localStorage.setItem('clients', JSON.stringify(defaultClients));
-  }
+// Initialize clients in Supabase if needed
+const initClients = async () => {
+  // Não é mais necessário com Supabase
 };
 
 // Get all clients
-const getClients = (): Client[] => {
-  initClients();
-  const clients = localStorage.getItem('clients');
-  return clients ? JSON.parse(clients) : [];
+const getClients = async (): Promise<Client[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*');
+    
+    if (error) {
+      console.error('Erro ao buscar clientes:', error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Erro ao buscar clientes:', error);
+    return [];
+  }
 };
 
 // Get client by id
-const getClientById = (id: string): Client | undefined => {
-  const clients = getClients();
-  return clients.find(client => client.id === id);
+const getClientById = async (id: string): Promise<Client | undefined> => {
+  try {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      console.error('Erro ao buscar cliente:', error);
+      return undefined;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar cliente por ID:', error);
+    return undefined;
+  }
 };
 
 // Add a client
-const addClient = (client: Omit<Client, 'id'>): Client => {
-  const clients = getClients();
-  const newClient = {
-    ...client,
-    id: Date.now().toString(), // Simple ID generation for MVP
-  };
-  clients.push(newClient);
-  localStorage.setItem('clients', JSON.stringify(clients));
-  return newClient;
+const addClient = async (client: Omit<Client, 'id'>): Promise<Client | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('clients')
+      .insert([
+        {
+          nome_fantasia: client.nomeFantasia,
+          cnpj: client.cnpj,
+          cpf: client.cpf,
+          telefone: client.telefone,
+          email: client.email,
+          cep: client.cep,
+          logradouro: client.logradouro,
+          numero: client.numero,
+          complemento: client.complemento,
+          bairro: client.bairro,
+          cidade: client.cidade,
+          uf: client.uf,
+          plano: client.plano,
+          valor: client.valor,
+          vencimento: client.vencimento
+        }
+      ])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Erro ao adicionar cliente:', error);
+      throw error;
+    }
+    
+    // Converta o formato do Supabase para o formato do Client
+    return mapSupabaseToClient(data);
+  } catch (error) {
+    console.error('Erro ao adicionar cliente:', error);
+    return null;
+  }
 };
 
 // Update a client
-const updateClient = (id: string, updatedClient: Omit<Client, 'id'>): Client | null => {
-  const clients = getClients();
-  const index = clients.findIndex(client => client.id === id);
-  if (index === -1) return null;
-  
-  const client = {
-    ...updatedClient,
-    id
-  };
-  
-  clients[index] = client;
-  localStorage.setItem('clients', JSON.stringify(clients));
-  return client;
+const updateClient = async (id: string, updatedClient: Omit<Client, 'id'>): Promise<Client | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('clients')
+      .update({
+        nome_fantasia: updatedClient.nomeFantasia,
+        cnpj: updatedClient.cnpj,
+        cpf: updatedClient.cpf,
+        telefone: updatedClient.telefone,
+        email: updatedClient.email,
+        cep: updatedClient.cep,
+        logradouro: updatedClient.logradouro,
+        numero: updatedClient.numero,
+        complemento: updatedClient.complemento,
+        bairro: updatedClient.bairro,
+        cidade: updatedClient.cidade,
+        uf: updatedClient.uf,
+        plano: updatedClient.plano,
+        valor: updatedClient.valor,
+        vencimento: updatedClient.vencimento
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Erro ao atualizar cliente:', error);
+      throw error;
+    }
+    
+    // Converta o formato do Supabase para o formato do Client
+    return mapSupabaseToClient(data);
+  } catch (error) {
+    console.error('Erro ao atualizar cliente:', error);
+    return null;
+  }
 };
 
 // Delete a client
-const deleteClient = (id: string): boolean => {
-  const clients = getClients();
-  const filteredClients = clients.filter(client => client.id !== id);
-  if (filteredClients.length === clients.length) return false;
-  
-  localStorage.setItem('clients', JSON.stringify(filteredClients));
-  return true;
+const deleteClient = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('clients')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Erro ao excluir cliente:', error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Erro ao excluir cliente:', error);
+    return false;
+  }
 };
+
+// Função auxiliar para converter formato do Supabase para o formato Client
+function mapSupabaseToClient(data: any): Client {
+  return {
+    id: data.id,
+    nomeFantasia: data.nome_fantasia,
+    cnpj: data.cnpj,
+    cpf: data.cpf,
+    telefone: data.telefone,
+    email: data.email,
+    cep: data.cep,
+    logradouro: data.logradouro,
+    numero: data.numero,
+    complemento: data.complemento,
+    bairro: data.bairro,
+    cidade: data.cidade,
+    uf: data.uf,
+    plano: data.plano,
+    valor: data.valor,
+    vencimento: data.vencimento
+  };
+}
 
 // Service to get address by CEP
 const getAddressByCep = async (cep: string) => {

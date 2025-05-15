@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,32 +9,49 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft } from "lucide-react";
 import { formatCurrency, formatDocument, formatPhone } from "../utils/formatters";
 import { toast } from "sonner";
+import { AuthContext } from "../App";
 
 const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (id) {
-      const foundClient = clientService.getClientById(id);
-      if (foundClient) {
-        setClient(foundClient);
+    const fetchClient = async () => {
+      if (!id || !user) return;
+      
+      try {
+        const foundClient = await clientService.getClientById(id);
+        if (foundClient) {
+          setClient(foundClient);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar detalhes do cliente:", error);
+        toast.error("Erro ao carregar detalhes do cliente");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }
-  }, [id]);
+    };
+    
+    fetchClient();
+  }, [id, user]);
 
-  const handleDelete = () => {
-    if (!client || !id) return;
+  const handleDelete = async () => {
+    if (!client || !id || !user) return;
     
     if (window.confirm(`Tem certeza que deseja excluir o cliente "${client.nomeFantasia}"?`)) {
-      const success = clientService.deleteClient(id);
-      if (success) {
-        toast.success("Cliente excluído com sucesso!");
-        navigate("/dashboard");
-      } else {
+      try {
+        const success = await clientService.deleteClient(id);
+        if (success) {
+          toast.success("Cliente excluído com sucesso!");
+          navigate("/dashboard");
+        } else {
+          toast.error("Erro ao excluir cliente.");
+        }
+      } catch (error) {
+        console.error("Erro ao excluir cliente:", error);
         toast.error("Erro ao excluir cliente.");
       }
     }

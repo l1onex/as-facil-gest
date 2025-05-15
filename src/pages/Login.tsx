@@ -1,97 +1,117 @@
 
-import { useContext, useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../App";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { LockKeyhole, User } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
+    
+    if (!email || !password) {
       toast.error("Por favor, preencha todos os campos.");
       return;
     }
-
-    setIsLoading(true);
+    
+    setLoading(true);
+    
     try {
-      await login(username, password);
-      toast.success("Login bem-sucedido!");
-      navigate("/dashboard");
+      if (isSignUp) {
+        // Registrar novo usuário
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        
+        if (error) {
+          toast.error(`Erro ao criar conta: ${error.message}`);
+        } else {
+          toast.success("Conta criada com sucesso! Faça login para continuar.");
+          setIsSignUp(false);
+        }
+      } else {
+        // Login
+        const success = await login(email, password);
+        
+        if (success) {
+          toast.success("Login realizado com sucesso!");
+          navigate("/dashboard");
+        } else {
+          toast.error("Email ou senha incorretos.");
+        }
+      }
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Falha no login. Verifique suas credenciais.");
+      console.error("Erro:", error);
+      toast.error("Ocorreu um erro. Tente novamente.");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="flex h-screen items-center justify-center bg-gray-100">
+      <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold text-blue-700">Gerenciador de Cobranças</CardTitle>
-          <CardDescription className="text-gray-500">
-            Entre com suas credenciais para acessar o sistema
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold text-blue-700">
+            {isSignUp ? "Crie sua conta" : "Gerenciador de Cobranças"}
+          </CardTitle>
+          <p className="text-gray-500">
+            {isSignUp ? "Preencha os dados abaixo para criar sua conta" : "Entre para gerenciar seus clientes e cobranças"}
+          </p>
         </CardHeader>
-
-        <form onSubmit={handleLogin}>
-          <CardContent className="space-y-4">
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Nome de usuário"
-                  className="pl-10"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu.email@exemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
-
             <div className="space-y-2">
-              <div className="relative">
-                <LockKeyhole className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  type="password"
-                  placeholder="Senha"
-                  className="pl-10"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
+              <Label htmlFor="password">Senha</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
             </div>
-          </CardContent>
-
-          <CardFooter>
-            <Button 
-              type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={isLoading}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading}
             >
-              {isLoading ? "Entrando..." : "Entrar"}
+              {loading ? "Carregando..." : isSignUp ? "Criar conta" : "Entrar"}
             </Button>
-          </CardFooter>
-        </form>
-        
-        <div className="px-6 pb-6 text-center text-sm text-gray-500">
-          <p>Para o MVP, use seu email e senha para autenticar</p>
-        </div>
+          </form>
+        </CardContent>
+        <CardFooter className="flex flex-col">
+          <Button
+            variant="ghost"
+            className="w-full text-sm"
+            onClick={() => setIsSignUp(!isSignUp)}
+          >
+            {isSignUp ? "Já tem uma conta? Entre" : "Não tem uma conta? Cadastre-se"}
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );

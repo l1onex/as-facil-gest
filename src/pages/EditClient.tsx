@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -8,30 +8,42 @@ import { clientService } from "../services/clientService";
 import { Client } from "../types/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthContext } from "../App";
 
 const EditClient = () => {
   const { id } = useParams<{ id: string }>();
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (id) {
-      const foundClient = clientService.getClientById(id);
-      if (foundClient) {
-        setClient(foundClient);
+    const fetchClient = async () => {
+      if (!id || !user) return;
+      
+      try {
+        const foundClient = await clientService.getClientById(id);
+        if (foundClient) {
+          setClient(foundClient);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar cliente:", error);
+        toast.error("Erro ao carregar dados do cliente");
+      } finally {
+        setInitialLoading(false);
       }
-      setInitialLoading(false);
-    }
-  }, [id]);
+    };
+    
+    fetchClient();
+  }, [id, user]);
 
   const handleUpdateClient = async (data: Omit<Client, 'id'>) => {
-    if (!id) return;
+    if (!id || !user) return;
     
     setIsLoading(true);
     try {
-      const updatedClient = clientService.updateClient(id, data);
+      const updatedClient = await clientService.updateClient(id, data);
       if (updatedClient) {
         toast.success("Cliente atualizado com sucesso!");
         navigate(`/client/${id}`);

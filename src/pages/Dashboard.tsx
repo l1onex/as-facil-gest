@@ -16,20 +16,34 @@ import { Input } from "@/components/ui/input";
 import { clientService } from "../services/clientService";
 import { Client } from "../types/client";
 import { formatCurrency } from "../utils/formatters";
+import { toast } from "sonner";
 
 const Dashboard = () => {
-  const { logout } = useContext(AuthContext);
+  const { logout, user } = useContext(AuthContext);
   const [clients, setClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const loadedClients = clientService.getClients();
-    setClients(loadedClients);
+    const fetchClients = async () => {
+      try {
+        setLoading(true);
+        const loadedClients = await clientService.getClients();
+        setClients(loadedClients);
+      } catch (error) {
+        console.error("Erro ao carregar clientes:", error);
+        toast.error("Não foi possível carregar os clientes.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchClients();
   }, []);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 
@@ -45,9 +59,16 @@ const Dashboard = () => {
       <header className="bg-white shadow">
         <div className="container mx-auto px-4 py-6 flex justify-between items-center">
           <h1 className="text-2xl md:text-3xl font-bold text-blue-700">Gerenciador de Cobranças</h1>
-          <Button variant="outline" onClick={handleLogout}>
-            Sair
-          </Button>
+          <div className="flex items-center space-x-4">
+            {user && (
+              <span className="text-sm text-gray-600">
+                {user.email}
+              </span>
+            )}
+            <Button variant="outline" onClick={handleLogout}>
+              Sair
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -71,7 +92,11 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              {filteredClients.length > 0 ? (
+              {loading ? (
+                <div className="flex justify-center py-10">
+                  <div className="animate-pulse">Carregando clientes...</div>
+                </div>
+              ) : filteredClients.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>

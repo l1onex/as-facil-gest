@@ -50,9 +50,18 @@ const getClientById = async (id: string): Promise<Client | undefined> => {
 // Add a client
 const addClient = async (client: Omit<Client, 'id'>): Promise<Client | null> => {
   try {
+    // Primeiro, obtenha o ID do usuário atual
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
+      console.error('Usuário não autenticado');
+      return null;
+    }
+    
+    const clientData = mapClientToSupabase(client, userData.user.id);
+    
     const { data, error } = await supabase
       .from('clients')
-      .insert([mapClientToSupabase(client)])
+      .insert([clientData])
       .select()
       .single();
     
@@ -71,9 +80,18 @@ const addClient = async (client: Omit<Client, 'id'>): Promise<Client | null> => 
 // Update a client
 const updateClient = async (id: string, updatedClient: Omit<Client, 'id'>): Promise<Client | null> => {
   try {
+    // Obter o ID do usuário atual
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
+      console.error('Usuário não autenticado');
+      return null;
+    }
+    
+    const clientData = mapClientToSupabase(updatedClient, userData.user.id);
+    
     const { data, error } = await supabase
       .from('clients')
-      .update(mapClientToSupabase(updatedClient))
+      .update(clientData)
       .eq('id', id)
       .select()
       .single();
@@ -133,7 +151,7 @@ function mapSupabaseToClient(data: any): Client {
 }
 
 // Função auxiliar para converter formato Client para o formato do Supabase
-function mapClientToSupabase(client: Omit<Client, 'id'>): any {
+function mapClientToSupabase(client: Omit<Client, 'id'>, userId: string): any {
   return {
     fantasy_name: client.nomeFantasia,
     cnpj: client.cnpj,
@@ -150,7 +168,7 @@ function mapClientToSupabase(client: Omit<Client, 'id'>): any {
     plan: client.plano,
     value: client.valor,
     due_date: parseInt(client.vencimento, 10),
-    user_id: supabase.auth.getUser().then(({ data }) => data.user?.id)
+    user_id: userId
   };
 }
 

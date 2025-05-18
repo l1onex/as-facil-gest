@@ -9,8 +9,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      clientes: {
+        Row: {
+          cep: string | null
+          cnpj: string | null
+          cpf: string | null
+          created_at: string | null
+          email: string | null
+          endereco: string | null
+          id: string
+          nome: string | null
+          plano: string | null
+          status_pagamento: string | null
+          telefone: string | null
+          user_id: string
+          valor: string | null
+          vencimento: string | null
+        }
+        Insert: {
+          cep?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome?: string | null
+          plano?: string | null
+          status_pagamento?: string | null
+          telefone?: string | null
+          user_id?: string
+          valor?: string | null
+          vencimento?: string | null
+        }
+        Update: {
+          cep?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome?: string | null
+          plano?: string | null
+          status_pagamento?: string | null
+          telefone?: string | null
+          user_id?: string
+          valor?: string | null
+          vencimento?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
+          amount: number | null
           cep: string | null
           city: string | null
           cnpj: string | null
@@ -33,6 +85,7 @@ export type Database = {
           value: number
         }
         Insert: {
+          amount?: number | null
           cep?: string | null
           city?: string | null
           cnpj?: string | null
@@ -55,6 +108,7 @@ export type Database = {
           value: number
         }
         Update: {
+          amount?: number | null
           cep?: string | null
           city?: string | null
           cnpj?: string | null
@@ -75,6 +129,57 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           value?: number
+        }
+        Relationships: []
+      }
+      ggsoft: {
+        Row: {
+          dataconhecimento: string | null
+          id: string
+        }
+        Insert: {
+          dataconhecimento?: string | null
+          id: string
+        }
+        Update: {
+          dataconhecimento?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      idnotification: {
+        Row: {
+          id: number
+          idbasico: string | null
+        }
+        Insert: {
+          id?: number
+          idbasico?: string | null
+        }
+        Update: {
+          id?: number
+          idbasico?: string | null
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          role: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          role?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          role?: string | null
         }
         Relationships: []
       }

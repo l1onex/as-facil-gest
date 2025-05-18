@@ -10,6 +10,7 @@ import { ArrowLeft } from "lucide-react";
 import { formatCurrency, formatDocument, formatPhone } from "../utils/formatters";
 import { toast } from "sonner";
 import { AuthContext } from "../App";
+import { Badge } from "@/components/ui/badge";
 
 const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -57,6 +58,23 @@ const ClientDetail = () => {
     }
   };
 
+  const handleTogglePaymentStatus = async () => {
+    if (!client || !id) return;
+    
+    const newStatus = client.statusPagamento === 'Pago' ? 'Pendente' : 'Pago';
+    const success = await clientService.updatePaymentStatus(id, newStatus);
+    
+    if (success) {
+      setClient({
+        ...client,
+        statusPagamento: newStatus
+      });
+      toast.success(`Status alterado para ${newStatus}`);
+    } else {
+      toast.error("Erro ao alterar status de pagamento");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -90,7 +108,16 @@ const ClientDetail = () => {
       <main className="container mx-auto px-4 py-6">
         <Card className="max-w-4xl mx-auto">
           <CardHeader className="bg-blue-50">
-            <CardTitle>{client.nomeFantasia}</CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle>{client.nomeFantasia}</CardTitle>
+              <Badge 
+                variant={client.statusPagamento === 'Pago' ? 'default' : 'destructive'}
+                className="cursor-pointer text-sm py-1 px-3"
+                onClick={handleTogglePaymentStatus}
+              >
+                {client.statusPagamento}
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -139,6 +166,18 @@ const ClientDetail = () => {
                   <div>
                     <span className="text-gray-500">Vencimento:</span>
                     <p>Todo dia {client.vencimento} do mês</p>
+                  </div>
+                  
+                  <div>
+                    <span className="text-gray-500">Status de Pagamento:</span>
+                    <p 
+                      className={`font-semibold ${
+                        client.statusPagamento === 'Pago' ? 'text-green-600' : 'text-red-600'
+                      } cursor-pointer`}
+                      onClick={handleTogglePaymentStatus}
+                    >
+                      {client.statusPagamento}
+                    </p>
                   </div>
                 </div>
               </div>

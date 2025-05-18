@@ -16,4 +16,5 @@ export interface Client {
   plano: string;
   valor: number;
   vencimento: string; // Data de vencimento mensal (dia do mês)
+  statusPagamento: 'Pago' | 'Pendente'; // Novo campo para status de pagamento
 }

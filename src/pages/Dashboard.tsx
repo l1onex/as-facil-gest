@@ -17,6 +17,7 @@ import { clientService } from "../services/clientService";
 import { Client } from "../types/client";
 import { formatCurrency } from "../utils/formatters";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 const Dashboard = () => {
   const { logout, user } = useContext(AuthContext);
@@ -53,6 +54,22 @@ const Dashboard = () => {
     (client.cpf && client.cpf.includes(searchTerm)) ||
     client.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleTogglePaymentStatus = async (client: Client) => {
+    const newStatus = client.statusPagamento === 'Pago' ? 'Pendente' : 'Pago';
+    const success = await clientService.updatePaymentStatus(client.id, newStatus);
+    
+    if (success) {
+      setClients(prevClients => 
+        prevClients.map(c => 
+          c.id === client.id ? { ...c, statusPagamento: newStatus } : c
+        )
+      );
+      toast.success(`Status alterado para ${newStatus}`);
+    } else {
+      toast.error("Erro ao alterar status de pagamento");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -105,6 +122,7 @@ const Dashboard = () => {
                       <TableHead>Plano</TableHead>
                       <TableHead>Valor</TableHead>
                       <TableHead>Vencimento</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -118,6 +136,15 @@ const Dashboard = () => {
                         <TableCell>{client.plano}</TableCell>
                         <TableCell>{formatCurrency(client.valor)}</TableCell>
                         <TableCell>Dia {client.vencimento}</TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={client.statusPagamento === 'Pago' ? 'default' : 'destructive'}
+                            className="cursor-pointer"
+                            onClick={() => handleTogglePaymentStatus(client)}
+                          >
+                            {client.statusPagamento}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"

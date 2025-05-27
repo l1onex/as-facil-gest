@@ -76,9 +76,11 @@ export type Database = {
           id: string
           neighborhood: string | null
           number: string | null
+          payment_status: string | null
           phone: string | null
           plan: string
           state: string | null
+          status_pagamento: string | null
           street: string | null
           updated_at: string | null
           user_id: string
@@ -99,9 +101,11 @@ export type Database = {
           id?: string
           neighborhood?: string | null
           number?: string | null
+          payment_status?: string | null
           phone?: string | null
           plan: string
           state?: string | null
+          status_pagamento?: string | null
           street?: string | null
           updated_at?: string | null
           user_id: string
@@ -122,9 +126,11 @@ export type Database = {
           id?: string
           neighborhood?: string | null
           number?: string | null
+          payment_status?: string | null
           phone?: string | null
           plan?: string
           state?: string | null
+          status_pagamento?: string | null
           street?: string | null
           updated_at?: string | null
           user_id?: string

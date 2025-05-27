@@ -164,7 +164,7 @@ function mapSupabaseToClient(data: any): Client {
 function mapClientToSupabase(client: Omit<Client, 'id'>, userId: string): any {
   return {
     fantasy_name: client.nomeFantasia,
-    full_name: client.nomeFantasia, // Usando o mesmo valor do nomeFantasia para o full_name
+    full_name: client.nomeFantasia,
     cnpj: client.cnpj,
     cpf: client.cpf,
     phone: client.telefone,

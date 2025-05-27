@@ -30,7 +30,8 @@ const ClientForm = ({ initialData, onSubmit, isLoading = false }: ClientFormProp
     uf: "",
     plano: "",
     valor: 0,
-    vencimento: ""
+    vencimento: "",
+    statusPagamento: "Pendente"
   });
   
   const [documentType, setDocumentType] = useState<"cpf" | "cnpj">("cnpj");
